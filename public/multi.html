@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Multiplayer</title>
+    <link rel="stylesheet" href="css/multi.css">
+    <link rel="stylesheet" href="css/popup.css">
+    <script src="js/popup.js" defer></script>
+    <script src="js/tile.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/multi.js" defer></script>
+</head>
+<body>
+
+    <div class="content">
+
+        <div class="players">
+
+            <div class="player-banner" id="player1" style="background-color: var(--black)">
+                <h1 style="color: var(--white)">Player 1</h1>
+                <div class="tile-count" id="black-tile-count">
+                    <h1></h1>
+                </div>
+            </div>
+            
+            <div class="player-banner" id="player2" style="background-color: var(--white); text-align: end;">
+                
+                <div class="tile-count" id="white-tile-count">
+                    <h1></h1>
+                </div>
+                <h1 style="color: var(--black)">Player 2</h1>
+            </div>
+            
+        </div>
+
+        
+        <div class="board-container">
+            <div id="board">
+                
+            </div>
+        </div>
+        
+
+    </div>
+
+    <div class="popup-container">
+
+        <div class="popup">
+            <div class="top">
+                <button id="close-popup">❌</button>
+            </div>
+            <div class="popup-content" id="game-popup">
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

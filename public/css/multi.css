@@ -1,0 +1,101 @@
+:root {
+    --white: rgb(238, 232, 232);
+    --black: rgb(15, 15, 19);
+}
+
+body {
+    text-align: center;
+    background-color: darkgreen;
+}
+
+.players {
+    width: 99vw;
+}
+.player-banner {
+    display: inline-block;
+    text-align: start;
+    font-family: 'Courier New', Courier, "Fira Code", monospace;
+    padding: 20px;
+    width: 40%;
+    height: 15vh;
+    margin: 10px;
+}
+.player-banner h1 {
+    display: inline-block;
+    width: 50%;
+}
+.tile-count-container {
+    display: inline-block;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+}
+.tile-count {
+    text-align: center;    
+    display: inline-block;
+    width: 5vw;
+    height: 5vw;
+    border-radius: 50%;
+}
+.tile-count h1 {
+    text-align: center;
+    font-family: 'Courier New', Courier, "Fira Code", monospace;
+    position: relative;
+    left: 10px;
+}
+
+#black-tile-count {   
+    border: var(--white) 3px solid;
+    color: var(--white);
+    background-color: var(--black);
+}
+#white-tile-count {
+    border: var(--black) 3px solid;
+    color: var(--black);
+    background-color: var(--white);
+}
+
+.is-player-turn {
+    animation: forwards 1s scale;
+}
+
+@keyframes scale {
+    50% {
+        transform: scaleX(105%) scaleY(105%);
+        outline: 4px solid rgb(184, 4, 4);
+    }
+    100% {
+        outline: 4px solid rgb(184, 4, 4);
+    }
+}
+
+.game-tile {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    background-color: darkgreen;
+    padding-bottom: 0;
+    border: 1px solid yellow;
+}
+.game-tile div {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+.game-tile:hover {
+    background-color: rgb(13, 167, 13);
+}
+
+.black-tile div {
+    background-color: var(--black);
+}
+.white-tile div {
+    background-color: var(--white);
+}
+
+.board-container {
+    background-color: darkgreen;
+    padding: 50px;
+}
