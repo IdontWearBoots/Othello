@@ -141,7 +141,7 @@ class Board {
      * @returns {number[]} the corresponding counts
      */
     count(states) {
-        let c = new Array(states.length);
+        let c = new Array(states.length).fill(0);
         for(let row of this.board) {
             for(let t of row) {
                 for(let i = 0; i < states.length; i++) {
@@ -251,7 +251,7 @@ class Board {
 
     static checkForWin(board) {
 
-        let [b, w] = board.count([TileState.BLACK, TileState.WHITE]).reduce((x, y) => x + y);
+        let [b, w] = board.count([TileState.BLACK, TileState.WHITE]);
         if(b + w === 64) {
             if(b > w)
                 Popup.BLACK_WINS.show();
