@@ -22,10 +22,12 @@ class Board {
      * @param {HTMLDivElement} elem The HTML element corresponding to the board on the page
      */
     constructor(elem) {
+        this.length = 8;
         // create and initialise the board array
-        this.board = [...new Array(8)].map(_ => new Array(8));
+        this.board = [...new Array(this.length)].map(_ => new Array(this.length));
         this.element = elem;
         this.turn = Turn.BLACK;
+        this.validPositions = [];
 
         // visual indication of whose turn it is
         document.getElementById(`player${this.turn.turnId + 1}`).classList.add("is-player-turn")
@@ -38,12 +40,12 @@ class Board {
         }
 
         // for every row
-        for(let i = 0; i < this.board.length; ++i) {
+        for(let i = 0; i < this.length; ++i) {
             // create a div corresponding to the row
             let row = document.createElement("div");
 
             // then for every possible tile on the row 
-            for(let j = 0; j < this.board[i].length; ++j) {
+            for(let j = 0; j < this.length; ++j) {
 
                 // create its element with corresponding class
                 let e = document.createElement("button");
@@ -66,13 +68,15 @@ class Board {
         }
 
         // set the specific center begining tiles to their correct state
-        this.board[3][3].setState = TileState.BLACK;
-        this.board[4][4].setState = TileState.BLACK;
-        this.board[3][4].setState = TileState.WHITE;
-        this.board[4][3].setState = TileState.WHITE;
+        this.board[3][3].setState = TileState.WHITE;
+        this.board[4][4].setState = TileState.WHITE;
+        this.board[3][4].setState = TileState.BLACK;
+        this.board[4][3].setState = TileState.BLACK;
 
         this.updateBanners();
+        this.validPositions = this.getAllValidPositions(TileState.BLACK);
     }
+
     /**
      * 
      * @param {number} x the x coordonate of the tile
@@ -96,6 +100,26 @@ class Board {
 
         // then return the two arrays
         return [lrdTiles, rldTiles];
+    }
+
+    /**
+     * Returns the tiles of a given row of the board
+     * @param {number} y The y coordonate of the row
+     * @returns {Tile[]} The row at y
+     */
+    getRowTiles(y) {
+        let r = new Array(this.length);
+        for(let i = 0; i < this.length; i++) {
+            r[i] = this.board[y][i];
+        }
+        return r;
+    }
+    getColumnTiles(x) {
+        let r = new Array(this.length);
+        for(let i = 0; i < this.length; i++) {
+            r[i] = this.board[i][x];
+        }
+        return r;
     }
     
     /**
@@ -136,6 +160,102 @@ class Board {
     }
 
     /**
+     * Returns tiles around a certain tile
+     * @param {number} x The x coordonate of a tile on the board
+     * @param {number} y The y coordonate of a tile on the board
+     * @returns {Tile[]} Tiles around the tile [x, y]
+     */
+    getTilesAround(x, y) {
+        let ret = [];
+        let offsetYTop = y === 0 ? 0 : 1;
+        let offsetYBottom = y === this.board.length - 1 ? 0 : 1;
+        let offsetXLeft = x === 0 ? 0 : 1;
+        let offsetXRight = x === this.board[0].length - 1 ? 0 : 1;
+
+        for(let i = y - offsetYTop; i <= y + offsetYBottom; i++) {
+			for(let j = x - offsetXLeft; j <= x + offsetXRight; j++) {
+				if(! (i == y && j == x) ) {
+					ret.push(this.board[i][j]);
+				}
+			}
+		}
+
+        return ret;
+    }
+
+    /**
+     * Returns an Array of all the possible positions the player could place his tile depending on the turn
+     * @param {TileState} turnState The state to which the tiles shall be flipped 
+     * @returns {Tile[]} All of the tiles that could be possible moves
+     */
+    getAllValidPositions(turnState) {
+        for(let r of this.board) {
+            for(let t of r) {
+                if(t.isFull()) continue;
+                t.setState = TileState.EMPTY;
+            }
+        }
+
+        let allPositions = [];
+
+        for(let i = 0; i < this.length; i++) {
+            for(let j = 0; j < this.length; j++) {
+                let e = this.board[i][j];
+                let around = this.getTilesAround(j, i); 
+
+                if(e.isFull()) {
+                    continue;
+                }
+                
+                // if every tile around the tile is in empty state then it cannot possibly a possible move 
+                if(
+                    around.filter(t => t.getState === TileState.EMPTY).length 
+                    === around.length) {
+                    continue;
+                }
+
+                // quiet setting of current tile state to the other state (black => white and vise-verça)
+                // this is to avoid really fricking annoying behaviour when tile is placed in between two others
+                // hard to explain but say 0 is black and 1 is white tile (space is empty)
+                // say tState=black and the row is something like this : 011 1110
+                // you want to place the tile in the empty spot but it says you cant cause 
+                // it doesn't verify bounds [0, 7] cause of the empty space
+                // silently replacing to a full space doesn't trigger the showing of a tile and fixes everything
+                // do it before evaluation that happens in the move object
+                e.state = TileState.TILE_PLACED_STATES[+!turnState.stateId];
+
+                let move = new Move(j, i, e, turnState, this, true);
+
+                if(move.isValid()) {
+                    allPositions.push(move.tile);
+                    move.tile.setState = TileState.POSSIBLE_PLACEMENT;
+                } else {
+                    move.tile.setState = TileState.EMPTY;
+                }
+            }
+        }
+
+        return allPositions;
+    }
+
+    checkForWin() {
+        let [b, w] = this.count([TileState.BLACK, TileState.WHITE]);
+        if(b + w === 64) {
+            if(b > w)
+                Popup.BLACK_WINS.show();
+            else 
+                Popup.WHITE_WINS.show();
+        }
+    }
+
+    nextTurn() {
+        this.turn = Turn.other(this.turn);
+        this.updateBanners();
+        this.checkForWin();
+        this.validPositions = this.getAllValidPositions(TileState.TILE_PLACED_STATES[this.turn.turnId]);
+    }
+
+    /**
      * Counts all given tiles corrsponding to specified states
      * @param {TileState[]} states the types of tiles you want to count
      * @returns {number[]} the corresponding counts
@@ -172,31 +292,15 @@ class Board {
     }
 
     /**
-     * Check if a given placement on the board is valid or not
-     * @param {TileState} t The current state of the tile 
-     * @param {Array} row Array composed of the rowStates, rowsf and rowef
-     * @param {Array} col Array composed of the colStates, colsf and colef
-     * @param {Array} lrd Array composed of the lrdStates, lrdsf and lrdef
-     * @param {Array} rld Array composed of the rldStates, rldsf and rldef
-     * @returns {bool} The validity of the placement
-     */
-    static isValidPlacement(t, row, col, lrd, rld) {        
-        let rowvf = Board.isValidFlip(t, ...row);
-        let colvf = Board.isValidFlip(t, ...col); 
-        let lrdvf = Board.isValidFlip(t, ...lrd);
-        let rldvf = Board.isValidFlip(t, ...rld); 
-
-        return rowvf || colvf || lrdvf || rldvf;
-    }
-
-    /**
      * Determines the upper and lower bounds in between which Tiles shall be flipped
-     * @param {TileState[]} states The states of the given direction you are checking
+     * @param {Tile[]} tiles The tiles of the given direction you are checking
      * @param {number} position The index of the Tile in the {states}
      * @param {Turn} turnState The given turn
      * @returns {number[]} The lower and upper bound
     */
-    static getFlipBounds(states, position, turnState, g = 1) {
+    static getFlipBounds(tiles, position, turnState) {
+        // get the states of the tiles
+        let states = tiles.map(e => e.getState);
 
         // determine lower bound e.g last correct state in between begining and position
         let lowerBound = states.slice(0, position).lastIndexOf(turnState);
@@ -208,11 +312,18 @@ class Board {
             upperBound = position;
         } else {
             // otherwise correct it to accuretly point to position
-            upperBound += position + g;
+            upperBound += position + 1;
         }
-        // same with lower
+        // same with lower but nothing to correct
         if(lowerBound === -1) {
             lowerBound = position;
+        }
+
+        if(!Board.isValidFlip(turnState, tiles, lowerBound, position)) {
+            lowerBound = position;
+        }
+        if(!Board.isValidFlip(turnState, tiles, position, upperBound)) {
+            upperBound = position;
         }
 
         // if the two indexes are one appart then it cannot possibly be a valid 
@@ -226,21 +337,26 @@ class Board {
 
     /**
      * Determines if you can actually flip all tiles between two bounds
-     * @param {TileState[]} states The states of the tils in the direction you are checking
+     * @param {TileState} turnState The state to which tiles shall be flip
+     * @param {Tile[]} tiles The tiles in the direction you are checking
      * @param {number} startFlip The lower bound of the tiles to flip
      * @param {number} endFlip The upper bound of the tiles to flip
-     * @returns 
+     * @returns {bool} The validity of the flip
      */
-    static isValidFlip(turnState, states, startFlip, endFlip) {
+    static isValidFlip(turnState, tiles, startFlip, endFlip) {
+        // get the states of the tiles
+        let states = tiles.map(e => e.getState);
 
+        // if there is nothing to flip then it is not valid
         if(startFlip === endFlip) {
             return false;
         }
 
-        // for every index
+        // for every index in between bounds
         for(let i = 0; i < states.length; i++) {
-            // if the index is in between the flip bounds and is EMPTY state
-            if(startFlip < i && i < endFlip && (states[i] === TileState.EMPTY || states[i] === turnState)) {
+            // if the index is in between the flip bounds and is EMPTY state or current state
+            if(startFlip < i && i < endFlip && 
+                (states[i] === TileState.EMPTY || states[i] === turnState || states[i] === TileState.POSSIBLE_PLACEMENT)) {
                 // then it cannot be a valid flip
                 return false;
             }
@@ -248,16 +364,4 @@ class Board {
 
         return true;
     }
-
-    static checkForWin(board) {
-
-        let [b, w] = board.count([TileState.BLACK, TileState.WHITE]);
-        if(b + w === 64) {
-            if(b > w)
-                Popup.BLACK_WINS.show();
-            else 
-                Popup.WHITE_WINS.show();
-        }
-    }
-
 }

@@ -1,4 +1,5 @@
 class TileState {
+    static POSSIBLE_PLACEMENT = new TileState(-2);
     static EMPTY = new TileState(-1);
     static WHITE = new TileState(1);
     static BLACK = new TileState(0);
@@ -35,16 +36,23 @@ class Tile {
             case TileState.BLACK:
                 this.element.classList.add("black-tile");
                 this.element.classList.remove("white-tile");
+                this.element.classList.remove("possible-tile");
             break;
 
             case TileState.WHITE:
                 this.element.classList.add("white-tile");
                 this.element.classList.remove("black-tile");
+                this.element.classList.remove("possible-tile");
             break;
-                
+
+            case TileState.POSSIBLE_PLACEMENT:
+                this.element.classList.add("possible-tile");
+            break;
+
             default:
                 this.element.classList.remove("white-tile");
                 this.element.classList.remove("black-tile");
+                this.element.classList.remove("possible-tile");
             break;
         }
 
@@ -57,58 +65,44 @@ class Tile {
     }
 
     click(b) {
-        if(this.state !== TileState.EMPTY) return;
-
-        // get the turn state
-        let tState = TileState.TILE_PLACED_STATES[b.turn.turnId];
-
-        // then set the state to the turn state
-        this.setState = tState;
-        
-        // get the states on the horizontal and vertical axis
-        let rowStates = b.board[this.y].map(e => e.getState);
-        let colStates = new Array(8);
-        for(let i = 0; i < b.board.length; i++) {
-            colStates[i] = b.board[i][this.x].getState;
+        if(b.validPositions.length === 0) {
+            if(b.turn === Turn.BLACK)
+                Popup.SKIP_BLACK_TURN.show();
+            else
+                Popup.SKIP_WHITE_TURN.show();
+            b.nextTurn();
         }
 
-        let [lrdTiles, rldTiles] = b.getDiagonalTiles(this.x, this.y);
-        let lrdStates = lrdTiles.map(e => e.getState);
-        let rldStates = rldTiles.map(e => e.getState);
-        
-        // get the flipping bounds and check they are usable
-        // row start flip / end flip 
-        // column and diags same thing
-        let [rowsf, rowef] = Board.getFlipBounds(rowStates, this.x, tState);
-        let [colsf, colef] = Board.getFlipBounds(colStates, this.y, tState);
-        let [lrdsf, lrdef] = Board.getFlipBounds(lrdStates, lrdTiles.indexOf(this), tState);
-        let [rldsf, rldef] = Board.getFlipBounds(rldStates, rldTiles.indexOf(this), tState);
-
-        if(!Board.isValidPlacement(tState,
-            [rowStates, rowsf, rowef], [colStates, colsf, colef], 
-            [lrdStates, lrdsf, lrdef], [rldStates, rldsf, rldef]
-        )) {
+        if(!b.validPositions.includes(this)) {
             Popup.INVALID_PLACEMENT.show();
-            this.setState = TileState.EMPTY;            
             return;
         }
+        
+        // get the turn state
+        let turnState = TileState.TILE_PLACED_STATES[b.turn.turnId];
 
-        if(Board.isValidFlip(tState, rowStates, rowsf, rowef)) {
-            b.flipRow(this.y, tState, rowsf, rowef);
-        }
-        if(Board.isValidFlip(tState, colStates, colsf, colef)) {
-            b.flipColumn(this.x, tState, colsf, colef);
-        }
-        if(Board.isValidFlip(tState, lrdStates, lrdsf, lrdef)) {
-            b.flipDiag(lrdTiles, tState, lrdsf, lrdef);
-        }
-        if(Board.isValidFlip(tState, rldStates, rldsf, rldef)) {
-            b.flipDiag(rldTiles, tState, rldsf, rldef);
-        }
+        // silent state setting for same reason as in the board.getAllValidPositions line smth
+        this.state = TileState.TILE_PLACED_STATES[+!turnState.stateId];
+
+        let move = new Move(this.x, this.y, this, turnState, b);
+        
+        if(Board.isValidFlip(turnState, move.rowTiles, ...move.rowBounds))
+            b.flipRow(this.y, turnState, ...move.rowBounds);
+        if(Board.isValidFlip(turnState, move.colTiles, ...move.colBounds))
+            b.flipColumn(this.x, turnState, ...move.colBounds);
+        if(Board.isValidFlip(turnState, move.lrdTiles, ...move.lrdBounds))
+            b.flipDiag(move.lrdTiles, turnState, ...move.lrdBounds);
+        if(Board.isValidFlip(turnState, move.rldTiles, ...move.rldBounds))
+            b.flipDiag(move.rldTiles, turnState, ...move.rldBounds);
+        
+        // then set the state to the turn state
+        this.setState = turnState;
         
         // change turn
-        b.turn = Turn.other(b.turn);
-        b.updateBanners();
+        b.nextTurn();
     }
 
+    isFull() {
+        return !(this.getState === TileState.EMPTY || this.getState === TileState.POSSIBLE_PLACEMENT);
+    }
 }

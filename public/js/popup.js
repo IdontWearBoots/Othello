@@ -10,6 +10,11 @@ class PopupType {
         popup_accent_color: "#307320",
         popup_text_color: "#091706"
     }
+    static INDIFFERENT_COLORS = {
+        popup_main_bg_color: "#ffe365",
+        popup_accent_color: "#ffd723",
+        popup_text_color: "#332b07"
+    }
 
     constructor(text, col) {
         this.element = document.getElementById("game-popup");
@@ -64,7 +69,15 @@ class Popup {
 
     static WHITE_WINS = new PopupType({
         h4: "White wins ! You were abysmall black..."
-    }, PopupType.POSITIVE_COLORS)
+    }, PopupType.POSITIVE_COLORS);
+
+    static SKIP_BLACK_TURN = new PopupType({
+        h4: "Black's turn was skipped because they cannot place any tiles"
+    }, PopupType.INDIFFERENT_COLORS);
+
+    static SKIP_WHITE_TURN = new PopupType({
+        h4: "White's turn was skipped because they cannot place any tiles"
+    }, PopupType.INDIFFERENT_COLORS);
 
     constructor(type) {
         type.show();

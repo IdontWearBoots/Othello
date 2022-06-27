@@ -1,0 +1,58 @@
+:root {
+    --main-bg-color: darkgreen;
+    --main-accent-color: rgb(5, 66, 5);
+    --main-complementary-color: plum;
+    --main-complementary-color-darker: rgb(85, 16, 85);
+    --main-text-color: #cce0cc;
+}
+
+body {
+    background-color: var(--main-bg-color);
+    font-family: 'Courier New', "Fira Code", Consolas, monospace;
+    text-align: center;
+    color: var(--main-text-color);
+}
+
+.title {
+    font-size: 6em;
+}
+
+.text {
+    color: var(--main-text-color);
+    width: 50%;
+    margin: auto;
+    font-family: Consolas, "Fira Code";
+}
+
+.game-modes-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 10px;
+}
+
+.game-mode-info-box {
+    width: 250px;
+    height: 150px;
+    padding: 50px;
+    background-color: var(--main-accent-color);
+    border-radius: 10px;    
+}
+
+.game-mode-name {
+    font-family: 'Courier New', Courier, "Fira Code", monospace;
+}
+
+.game-mode {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: var(--main-complementary-color);
+    transition: all 0.7s;
+    border: 2px solid var(--main-complementary-color);
+}
+.game-mode:hover {
+    background-color:  var(--main-complementary-color-darker);
+    border: 1px solid var(--main-complementary-color-darker);
+    color: var(--main-text-color);
+    transform: scaleX(110%) scaleY(110%);
+}

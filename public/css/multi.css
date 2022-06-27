@@ -94,6 +94,9 @@ body {
 .white-tile div {
     background-color: var(--white);
 }
+.possible-tile div {
+    background-color: dimgray;
+}
 
 .board-container {
     background-color: darkgreen;
